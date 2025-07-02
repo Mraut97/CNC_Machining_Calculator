@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Machining Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .calc-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .calc-section:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+
+        .calc-section h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .calculate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .formula {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 CNC Machining Calculator</h1>
+            <img src="images/section1.png" alt="RPM Calculation Diagram">
+            <p>Complete toolset for speeds, feeds, and machining parameters</p>
+        </div>
+
+        <div class="calculator-grid">
+            <!-- Speeds & Feeds Calculator -->
+            <div class="calc-section">
+                <h2>Speeds & Feeds</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>🌀 <strong>Spindle RPM</strong> and <strong>Feed Rate</strong> are calculated based on tool diameter and surface speed.</div>
+                <div class="input-group">
+                    <label>Tool Diameter (mm):</label>
+                    <input type="number" id="toolDiameter" value="10" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Surface Speed (m/min):</label>
+                    <input type="number" id="surfaceSpeed" value="200" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Feed per Tooth (mm/tooth):</label>
+                    <input type="number" id="feedPerTooth" value="0.1" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Number of Teeth:</label>
+                    <input type="number" id="numTeeth" value="4" step="1">
+                </div>
+                <button class="calculate-btn" onclick="calculateSpeedsFeed()">Calculate</button>
+                <div id="speedsFeedResult" class="result" style="display: none;"></div>
+                <div class="formula">
+                    RPM = (Surface Speed × 1000) / (π × Diameter)<br>
+                    Feed Rate = RPM × Teeth × Feed per Tooth
+                </div>
+            </div>
+
+            <!-- Material Database -->
+            <div class="calc-section">
+                <h2>Material Presets</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>📚 <strong>Material presets</strong> auto-fill ideal parameters like speed, force, and feed per tooth.</div>
+                <div class="input-group">
+                    <label>Select Material:</label>
+                    <select id="materialSelect" onchange="applyMaterialPreset()">
+                        <option value="">Select Material</option>
+                        <option value="aluminum">Aluminum 6061</option>
+                        <option value="steel">Mild Steel</option>
+                        <option value="stainless">Stainless Steel 304</option>
+                        <option value="titanium">Titanium Ti-6Al-4V</option>
+                        <option value="brass">Brass</option>
+                        <option value="copper">Copper</option>
+                        <option value="plastic">Plastic (ABS/Acrylic)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Operation Type:</label>
+                    <select id="operationType">
+                        <option value="roughing">Roughing</option>
+                        <option value="finishing">Finishing</option>
+                        <option value="drilling">Drilling</option>
+                    </select>
+                </div>
+                <div id="materialInfo" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Cutting Force Calculator -->
+            <div class="calc-section">
+                <h2>Cutting Force</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>💪 <strong>Cutting Force</strong> estimates mechanical force needed based on feed and depth.</div>
+                <div class="input-group">
+                    <label>Axial Depth of Cut (mm):</label>
+                    <input type="number" id="axialDepth" value="2" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Radial Depth of Cut (mm):</label>
+                    <input type="number" id="radialDepth" value="5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Specific Cutting Force (N/mm²):</label>
+                    <input type="number" id="specificForce" value="2000" step="100">
+                </div>
+                <div class="input-group">
+                    <label>Feed Rate (mm/min):</label>
+                    <input type="number" id="feedRateForce" value="800" step="10">
+                </div>
+                <button class="calculate-btn" onclick="calculateCuttingForce()">Calculate</button>
+                <div id="cuttingForceResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Tool Life Calculator -->
+            <div class="calc-section">
+                <h2>Tool Life Estimation</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>⏳ <strong>Tool Life</strong> is estimated using Taylor's equation: T = C / Vⁿ.</div>
+                <div class="input-group">
+                    <label>Cutting Speed (m/min):</label>
+                    <input type="number" id="cuttingSpeed" value="200" step="10">
+                </div>
+                <div class="input-group">
+                    <label>Tool Life Constant (C):</label>
+                    <input type="number" id="toolLifeConstant" value="400" step="10">
+                </div>
+                <div class="input-group">
+                    <label>Taylor Exponent (n):</label>
+                    <input type="number" id="taylorExponent" value="0.3" step="0.1">
+                </div>
+                <button class="calculate-btn" onclick="calculateToolLife()">Calculate</button>
+                <div id="toolLifeResult" class="result" style="display: none;"></div>
+                <div class="formula">
+                    Tool Life (T) = C / (Cutting Speed)^n
+                </div>
+            </div>
+
+            <!-- Power Calculation -->
+            <div class="calc-section">
+                <h2>Power Requirements</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>⚡ <strong>Power</strong> calculation estimates motor requirement based on MRR and efficiency.</div>
+                <div class="input-group">
+                    <label>Material Removal Rate (cm³/min):</label>
+                    <input type="number" id="mrr" value="10" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Specific Power (W·min/cm³):</label>
+                    <input type="number" id="specificPower" value="4" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Machine Efficiency (%):</label>
+                    <input type="number" id="machineEfficiency" value="85" step="1">
+                </div>
+                <button class="calculate-btn" onclick="calculatePower()">Calculate</button>
+                <div id="powerResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Tapping Calculator -->
+            <div class="calc-section">
+                <h2>Tapping Calculator</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>🔩 <strong>Tapping RPM</strong> and feed rate depend on material and thread pitch.</div>
+                <div class="input-group">
+                    <label>Thread Size:</label>
+                    <select id="threadSize">
+                        <option value="M3">M3 x 0.5</option>
+                        <option value="M4">M4 x 0.7</option>
+                        <option value="M5">M5 x 0.8</option>
+                        <option value="M6">M6 x 1.0</option>
+                        <option value="M8">M8 x 1.25</option>
+                        <option value="M10">M10 x 1.5</option>
+                        <option value="M12">M12 x 1.75</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Material Type:</label>
+                    <select id="tapMaterial">
+                        <option value="aluminum">Aluminum</option>
+                        <option value="steel">Steel</option>
+                        <option value="stainless">Stainless Steel</option>
+                    </select>
+                </div>
+                <button class="calculate-btn" onclick="calculateTapping()">Calculate</button>
+                <div id="tappingResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Chip Load Calculator -->
+            <div class="calc-section">
+                <h2>Chip Load & MRR</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>📉 <strong>Chip Load</strong> and <strong>MRR</strong> (material removal rate) indicate machining efficiency.</div>
+                <div class="input-group">
+                    <label>Spindle Speed (RPM):</label>
+                    <input type="number" id="spindleRPM" value="3000" step="100">
+                </div>
+                <div class="input-group">
+                    <label>Feed Rate (mm/min):</label>
+                    <input type="number" id="feedRateChip" value="1200" step="10">
+                </div>
+                <div class="input-group">
+                    <label>Axial Depth (mm):</label>
+                    <input type="number" id="axialDepthChip" value="2" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Radial Width (mm):</label>
+                    <input type="number" id="radialWidthChip" value="5" step="0.1">
+                </div>
+                <button class="calculate-btn" onclick="calculateChipLoad()">Calculate</button>
+                <div id="chipLoadResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Drilling Calculator -->
+            <div class="calc-section">
+                <h2>Drilling Parameters</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>🛠️ <strong>Drill RPM</strong> and feed rate vary by drill size and material hardness.</div>
+                <div class="input-group">
+                    <label>Drill Diameter (mm):</label>
+                    <input type="number" id="drillDiameter" value="6" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Material:</label>
+                    <select id="drillMaterial">
+                        <option value="aluminum">Aluminum</option>
+                        <option value="steel">Steel</option>
+                        <option value="stainless">Stainless Steel</option>
+                        <option value="cast_iron">Cast Iron</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Hole Depth (mm):</label>
+                    <input type="number" id="holeDepth" value="10" step="0.5">
+                </div>
+                <button class="calculate-btn" onclick="calculateDrilling()">Calculate</button>
+                <div id="drillingResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Surface Roughness Calculator -->
+            <div class="calc-section">
+                <h2>Surface Roughness</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>🌊 <strong>Surface Finish (Ra)</strong> depends on feed/rev and tool nose radius.</div>
+                <div class="input-group">
+                    <label>Feed Rate (mm/min):</label>
+                    <input type="number" id="feedRateRoughness" value="800" step="10">
+                </div>
+                <div class="input-group">
+                    <label>Tool Nose Radius (mm):</label>
+                    <input type="number" id="toolNoseRadius" value="0.4" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Spindle Speed (RPM):</label>
+                    <input type="number" id="spindleSpeedRoughness" value="3000" step="100">
+                </div>
+                <button class="calculate-btn" onclick="calculateSurfaceRoughness()">Calculate</button>
+                <div id="surfaceRoughnessResult" class="result" style="display: none;"></div>
+                <div class="formula">
+                    Ra = (Feed per Revolution)² / (32 × Tool Nose Radius)
+                </div>
+            </div>
+
+            <!-- Machining Time Calculator -->
+            <div class="calc-section">
+                <h2>Machining Time</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>⏱️ <strong>Machining Time</strong> is based on tool path, step over, and feed.</div>
+                <div class="input-group">
+                    <label>Part Length (mm):</label>
+                    <input type="number" id="partLength" value="100" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Part Width (mm):</label>
+                    <input type="number" id="partWidth" value="50" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Total Depth (mm):</label>
+                    <input type="number" id="totalDepth" value="10" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Step Over (%):</label>
+                    <input type="number" id="stepOver" value="50" step="5">
+                </div>
+                <button class="calculate-btn" onclick="calculateMachiningTime()">Calculate</button>
+                <div id="machiningTimeResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- G-Code Speed Calculator -->
+            <div class="calc-section">
+                <h2>G-Code Optimization</h2><div style='font-size:0.9em; color:#333; margin-bottom:12px;'>📐 <strong>G-Code Speed</strong> limits are calculated based on deflection and tool material.</div>
+                <div class="input-group">
+                    <label>Current Feed Rate (mm/min):</label>
+                    <input type="number" id="currentFeed" value="1000" step="50">
+                </div>
+                <div class="input-group">
+                    <label>Tool Deflection Limit (μm):</label>
+                    <input type="number" id="deflectionLimit" value="10" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Tool Overhang (mm):</label>
+                    <input type="number" id="toolOverhang" value="25" step="5">
+                </div>
+                <div class="input-group">
+                    <label>Tool Material:</label>
+                    <select id="toolMaterial">
+                        <option value="carbide">Carbide</option>
+                        <option value="hss">High Speed Steel</option>
+                        <option value="ceramic">Ceramic</option>
+                    </select>
+                </div>
+                <button class="calculate-btn" onclick="calculateGCodeOptimization()">Calculate</button>
+                <div id="gcodeResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Material database
+        const materials = {
+            aluminum: {
+                surfaceSpeed: 300,
+                feedPerTooth: 0.15,
+                specificForce: 600,
+                specificPower: 0.5,
+                toolLifeConstant: 600
+            },
+            steel: {
+                surfaceSpeed: 120,
+                feedPerTooth: 0.08,
+                specificForce: 2000,
+                specificPower: 4,
+                toolLifeConstant: 400
+            },
+            stainless: {
+                surfaceSpeed: 80,
+                feedPerTooth: 0.06,
+                specificForce: 2500,
+                specificPower: 5,
+                toolLifeConstant: 300
+            },
+            titanium: {
+                surfaceSpeed: 60,
+                feedPerTooth: 0.05,
+                specificForce: 3000,
+                specificPower: 6,
+                toolLifeConstant: 200
+            },
+            brass: {
+                surfaceSpeed: 200,
+                feedPerTooth: 0.12,
+                specificForce: 800,
+                specificPower: 1,
+                toolLifeConstant: 500
+            },
+            copper: {
+                surfaceSpeed: 250,
+                feedPerTooth: 0.14,
+                specificForce: 700,
+                specificPower: 0.8,
+                toolLifeConstant: 550
+            },
+            plastic: {
+                surfaceSpeed: 400,
+                feedPerTooth: 0.2,
+                specificForce: 200,
+                specificPower: 0.2,
+                toolLifeConstant: 800
+            }
+        };
+
+        function calculateSpeedsFeed() {
+            const diameter = parseFloat(document.getElementById('toolDiameter').value);
+            const surfaceSpeed = parseFloat(document.getElementById('surfaceSpeed').value);
+            const feedPerTooth = parseFloat(document.getElementById('feedPerTooth').value);
+            const numTeeth = parseInt(document.getElementById('numTeeth').value);
+
+            const rpm = (surfaceSpeed * 1000) / (Math.PI * diameter);
+            const feedRate = rpm * numTeeth * feedPerTooth;
+
+            const result = document.getElementById('speedsFeedResult');
+            result.innerHTML = `
+                <strong>Spindle Speed:</strong> ${Math.round(rpm)} RPM<br>
+                <strong>Feed Rate:</strong> ${Math.round(feedRate)} mm/min<br>
+                <strong>Table Feed:</strong> ${(feedRate/1000).toFixed(3)} m/min
+            `;
+            result.style.display = 'block';
+        }
+
+        function applyMaterialPreset() {
+            const material = document.getElementById('materialSelect').value;
+            if (material && materials[material]) {
+                const mat = materials[material];
+                document.getElementById('surfaceSpeed').value = mat.surfaceSpeed;
+                document.getElementById('feedPerTooth').value = mat.feedPerTooth;
+                document.getElementById('specificForce').value = mat.specificForce;
+                document.getElementById('specificPower').value = mat.specificPower;
+                document.getElementById('toolLifeConstant').value = mat.toolLifeConstant;
+
+                const info = document.getElementById('materialInfo');
+                info.innerHTML = `
+                    <strong>Applied Settings:</strong><br>
+                    Surface Speed: ${mat.surfaceSpeed} m/min<br>
+                    Feed per Tooth: ${mat.feedPerTooth} mm/tooth<br>
+                    Specific Force: ${mat.specificForce} N/mm²
+                `;
+                info.style.display = 'block';
+            }
+        }
+
+        function calculateCuttingForce() {
+            const axialDepth = parseFloat(document.getElementById('axialDepth').value);
+            const radialDepth = parseFloat(document.getElementById('radialDepth').value);
+            const specificForce = parseFloat(document.getElementById('specificForce').value);
+            const feedRate = parseFloat(document.getElementById('feedRateForce').value);
+
+            const chipArea = axialDepth * (feedRate / 1000);
+            const cuttingForce = specificForce * chipArea;
+            const radialForce = cuttingForce * 0.3;
+            const axialForce = cuttingForce * 0.2;
+
+            const result = document.getElementById('cuttingForceResult');
+            result.innerHTML = `
+                <strong>Cutting Force:</strong> ${Math.round(cuttingForce)} N<br>
+                <strong>Radial Force:</strong> ${Math.round(radialForce)} N<br>
+                <strong>Axial Force:</strong> ${Math.round(axialForce)} N<br>
+                <strong>Total Force:</strong> ${Math.round(Math.sqrt(Math.pow(cuttingForce,2) + Math.pow(radialForce,2) + Math.pow(axialForce,2)))} N
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateToolLife() {
+            const cuttingSpeed = parseFloat(document.getElementById('cuttingSpeed').value);
+            const toolLifeConstant = parseFloat(document.getElementById('toolLifeConstant').value);
+            const taylorExponent = parseFloat(document.getElementById('taylorExponent').value);
+
+            const toolLife = toolLifeConstant / Math.pow(cuttingSpeed, taylorExponent);
+            const toolLifeHours = toolLife / 60;
+
+            const result = document.getElementById('toolLifeResult');
+            result.innerHTML = `
+                <strong>Tool Life:</strong> ${Math.round(toolLife)} minutes<br>
+                <strong>Tool Life:</strong> ${toolLifeHours.toFixed(2)} hours<br>
+                <strong>Parts per Tool:</strong> ${Math.round(toolLife / 2)} (est.)
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculatePower() {
+            const mrr = parseFloat(document.getElementById('mrr').value);
+            const specificPower = parseFloat(document.getElementById('specificPower').value);
+            const efficiency = parseFloat(document.getElementById('machineEfficiency').value) / 100;
+
+            const netPower = mrr * specificPower;
+            const grossPower = netPower / efficiency;
+            const motorPower = grossPower * 1.3;
+
+            const result = document.getElementById('powerResult');
+            result.innerHTML = `
+                <strong>Net Power:</strong> ${netPower.toFixed(2)} W<br>
+                <strong>Gross Power:</strong> ${grossPower.toFixed(2)} W<br>
+                <strong>Required Motor:</strong> ${motorPower.toFixed(2)} W<br>
+                <strong>HP Required:</strong> ${(motorPower * 0.00134).toFixed(2)} HP
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateTapping() {
+            const threadData = {
+                M3: { diameter: 3, pitch: 0.5, rpm: 400, feed: 200 },
+                M4: { diameter: 4, pitch: 0.7, rpm: 350, feed: 245 },
+                M5: { diameter: 5, pitch: 0.8, rpm: 300, feed: 240 },
+                M6: { diameter: 6, pitch: 1.0, rpm: 250, feed: 250 },
+                M8: { diameter: 8, pitch: 1.25, rpm: 200, feed: 250 },
+                M10: { diameter: 10, pitch: 1.5, rpm: 150, feed: 225 },
+                M12: { diameter: 12, pitch: 1.75, rpm: 120, feed: 210 }
+            };
+
+            const thread = document.getElementById('threadSize').value;
+            const material = document.getElementById('tapMaterial').value;
+            const data = threadData[thread];
+
+            let speedMultiplier = 1;
+            if (material === 'steel') speedMultiplier = 0.7;
+            if (material === 'stainless') speedMultiplier = 0.5;
+
+            const rpm = Math.round(data.rpm * speedMultiplier);
+            const feedRate = Math.round(data.feed * speedMultiplier);
+            const drillSize = data.diameter - data.pitch;
+
+            const result = document.getElementById('tappingResult');
+            result.innerHTML = `
+                <strong>Tap Size:</strong> ${thread}<br>
+                <strong>Drill Size:</strong> ${drillSize.toFixed(1)} mm<br>
+                <strong>Tapping Speed:</strong> ${rpm} RPM<br>
+                <strong>Feed Rate:</strong> ${feedRate} mm/min<br>
+                <strong>Pitch:</strong> ${data.pitch} mm
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateChipLoad() {
+            const rpm = parseFloat(document.getElementById('spindleRPM').value);
+            const feedRate = parseFloat(document.getElementById('feedRateChip').value);
+            const axialDepth = parseFloat(document.getElementById('axialDepthChip').value);
+            const radialWidth = parseFloat(document.getElementById('radialWidthChip').value);
+
+            const chipLoad = feedRate / rpm;
+            const mrr = (feedRate * axialDepth * radialWidth) / 1000;
+
+            const result = document.getElementById('chipLoadResult');
+            result.innerHTML = `
+                <strong>Chip Load:</strong> ${chipLoad.toFixed(3)} mm/rev<br>
+                <strong>Material Removal Rate:</strong> ${mrr.toFixed(2)} cm³/min<br>
+                <strong>Surface Speed:</strong> ${(rpm * Math.PI * 10 / 1000).toFixed(0)} m/min (10mm tool)
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateDrilling() {
+            const drillData = {
+                aluminum: { speed: 100, feed: 0.1 },
+                steel: { speed: 25, feed: 0.05 },
+                stainless: { speed: 15, feed: 0.03 },
+                cast_iron: { speed: 30, feed: 0.08 }
+            };
+
+            const diameter = parseFloat(document.getElementById('drillDiameter').value);
+            const material = document.getElementById('drillMaterial').value;
+            const depth = parseFloat(document.getElementById('holeDepth').value);
+            const data = drillData[material];
+
+            const rpm = (data.speed * 1000) / (Math.PI * diameter);
+            const feedRate = rpm * data.feed;
+            const drillingTime = depth / feedRate;
+
+            const result = document.getElementById('drillingResult');
+            result.innerHTML = `
+                <strong>Drilling Speed:</strong> ${Math.round(rpm)} RPM<br>
+                <strong>Feed Rate:</strong> ${Math.round(feedRate)} mm/min<br>
+                <strong>Drilling Time:</strong> ${drillingTime.toFixed(2)} minutes<br>
+                <strong>Peck Depth:</strong> ${(diameter * 3).toFixed(1)} mm (recommended)
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateSurfaceRoughness() {
+            const feedRate = parseFloat(document.getElementById('feedRateRoughness').value);
+            const noseRadius = parseFloat(document.getElementById('toolNoseRadius').value);
+            const rpm = parseFloat(document.getElementById('spindleSpeedRoughness').value);
+
+            const feedPerRev = feedRate / rpm;
+            const roughness = Math.pow(feedPerRev, 2) / (32 * noseRadius);
+            const roughnessMicrons = roughness * 1000;
+
+            const result = document.getElementById('surfaceRoughnessResult');
+            result.innerHTML = `
+                <strong>Feed per Revolution:</strong> ${feedPerRev.toFixed(3)} mm/rev<br>
+                <strong>Surface Roughness (Ra):</strong> ${roughnessMicrons.toFixed(2)} μm<br>
+                <strong>Surface Roughness (Ra):</strong> ${roughness.toFixed(4)} mm<br>
+                <strong>Finish Quality:</strong> ${roughnessMicrons < 1.6 ? 'Fine' : roughnessMicrons < 6.3 ? 'Medium' : 'Rough'}
+            `;
+            result.style.display = 'block';
+        }
+
+        function calculateMachiningTime() {
+            const length = parseFloat(document.getElementById('partLength').value);
+            const width = parseFloat(document.getElementById('partWidth').value);
+            const depth = parseFloat(document.getElementById('totalDepth').value);
+            const stepOver = parseFloat(document.getElementById('stepOver').value) / 100;
+
+            const toolDiameter = parseFloat(document.getElementById('toolDiameter').value) || 10;
+            }
+    </script>
+</body>
+
+<script>
+    function calculateMachiningTime() {
+        const length = parseFloat(document.getElementById('partLength').value);
+        const width = parseFloat(document.getElementById('partWidth').value);
+        const depth = parseFloat(document.getElementById('totalDepth').value);
+        const stepOver = parseFloat(document.getElementById('stepOver').value) / 100;
+        const toolDiameter = parseFloat(document.getElementById('toolDiameter').value) || 10;
+        const feedRate = parseFloat(document.getElementById('feedRateChip').value) || 1000;
+
+        const stepOverDist = toolDiameter * stepOver;
+        const totalPasses = Math.ceil(width / stepOverDist);
+        const totalVolume = length * width * depth;
+        const mrr = feedRate * depth * stepOverDist / 1000;
+        const timeMin = (totalVolume / 1000) / mrr;
+
+        const result = document.getElementById('machiningTimeResult');
+        result.innerHTML = `
+            <strong>Total Volume:</strong> ${(totalVolume / 1000).toFixed(1)} cm³<br>
+            <strong>Step Over Distance:</strong> ${stepOverDist.toFixed(1)} mm<br>
+            <strong>Total Passes:</strong> ${totalPasses}<br>
+            <strong>Estimated Time:</strong> ${timeMin.toFixed(2)} min
+        `;
+        result.style.display = 'block';
+    }
+
+    function calculateGCodeOptimization() {
+        const feed = parseFloat(document.getElementById('currentFeed').value);
+        const deflection = parseFloat(document.getElementById('deflectionLimit').value);
+        const overhang = parseFloat(document.getElementById('toolOverhang').value);
+        const material = document.getElementById('toolMaterial').value;
+
+        let k = 1;
+        if (material === 'carbide') k = 1.0;
+        if (material === 'hss') k = 0.75;
+        if (material === 'ceramic') k = 1.2;
+
+        const safeFeed = Math.max(feed * (deflection / (overhang * k)), 100);
+
+        const result = document.getElementById('gcodeResult');
+        result.innerHTML = `
+            <strong>Optimized Feed Rate:</strong> ${Math.round(safeFeed)} mm/min<br>
+            <strong>Tool Material Factor:</strong> ${k}<br>
+            <strong>Deflection Limit:</strong> ${deflection} µm<br>
+            <strong>Tool Overhang:</strong> ${overhang} mm
+        `;
+        result.style.display = 'block';
+    }
+</script>
+</html>
